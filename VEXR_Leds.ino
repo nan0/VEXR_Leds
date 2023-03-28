@@ -39,45 +39,37 @@ void displayIndexPage() {
 **/
 void startServer() {
   server.on("/", displayIndexPage);
-  server.on("/on", []() {
+  server.on("/power", HTTP_GET, []() {
+    server.send(200, "text/plain", POWERED_ON ? "1" : "0");
+  });
+  server.on("/power/on", HTTP_POST, []() {
     POWERED_ON = true;
     Serial.println("turned on");
     server.send(200);
   });
-  server.on("/off", []() {
+  server.on("/power/off", HTTP_POST, []() {
     POWERED_ON = false;
     server.send(200);
   });
-  server.on("/brightness/front", []() {
-    int level = server.arg("level").toInt();
-    strips.brightnessFront = level;
-    server.send(200);
-  });
-  server.on("/brightness/back", []() {
-    int level = server.arg("level").toInt();
-    strips.brightnessBack = level;
-    server.send(200);
-  });
-  server.on("/animate/accordion", []() {
-    animation = AnimationType::ACCORDION;
-    server.send(200);
-  });
-  server.on("/animate/fixed", []() {
-    animation = AnimationType::FIXED;
-    server.send(200);
-  });
-  server.on("/status/power", []() {
-    server.send(200, "text/plain", POWERED_ON ? "1" : "0");
-  });
-  server.on("/status/brightness/front", []() {
+  server.on("/brightness/front", HTTP_GET, []() {
     String brightnessFront(strips.brightnessFront);
     server.send(200, "text/plain", brightnessFront);
   });
-  server.on("/status/brightness/back", []() {
+  server.on("/brightness/front", HTTP_POST, []() {
+    String level = server.arg("plain");
+    strips.brightnessFront = level.toInt();
+    server.send(200);
+  });
+  server.on("/brightness/back", HTTP_GET, []() {
     String brightnessBack(strips.brightnessBack);
     server.send(200, "text/plain", brightnessBack);
   });
-  server.on("/status/animation", []() {
+  server.on("/brightness/back", HTTP_POST, []() {
+    String level = server.arg("plain");
+    strips.brightnessBack = level.toInt();
+    server.send(200);
+  });
+  server.on("/animation", HTTP_GET, []() {
     String animationName;
     switch (animation) {
       case AnimationType::LINEAR:
@@ -91,6 +83,18 @@ void startServer() {
         break;
     }
     server.send(200, "text/plain", animationName);
+  });
+  server.on("/animation/linear", HTTP_POST, []() {
+    animation = AnimationType::LINEAR;
+    server.send(200);
+  });
+  server.on("/animation/accordion", HTTP_POST, []() {
+    animation = AnimationType::ACCORDION;
+    server.send(200);
+  });
+  server.on("/animation/fixed", HTTP_POST, []() {
+    animation = AnimationType::FIXED;
+    server.send(200);
   });
   httpUpdater.setup(&server);
   server.begin();
