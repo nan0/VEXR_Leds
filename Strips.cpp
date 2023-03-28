@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+#include "EEPROMAddress.h"
 #include "Strips.h"
 
 #define PIN_FRONT D1  // The pin on which the front data cable is connected
@@ -8,15 +10,24 @@ Adafruit_NeoPixel stripFront(NB_PIXELS, PIN_FRONT, NEO_GRB + NEO_KHZ800);  // Th
 Adafruit_NeoPixel stripBack(NB_PIXELS, PIN_BACK, NEO_GRB + NEO_KHZ800);    // The back strip
 
 Strips::Strips() {
-  colorFront = stripFront.Color(255, 255, 255); //255, 100, 0
+  EEPROM.begin(4);
+
+  colorFront = stripFront.Color(255, 255, 255);  //255, 100, 0
   colorBack = stripFront.Color(255, 0, 0);
+
   brightnessFront = 255;
   brightnessBack = 255;
 }
 
-/**
-  Triggers one turn of accordion animation for both the strips
-**/
+void Strips::powerOn(bool on) {
+  EEPROM.update(EEPROMAddress::POWER, (char)on);
+  EEPROM.commit();
+}
+
+bool Strips::isPoweredOn() {
+  return (bool)EEPROM.read(EEPROMAddress::POWER);
+}
+
 void Strips::animateAccordion() {
 
   const int turnDelay = 35;
@@ -57,9 +68,6 @@ void Strips::animateAccordion() {
   }
 }
 
-/**
-  Triggers one turn of linear animation for both the strips
-**/
 void Strips::animateLinear() {
 
   const int turnDelay = 35;
@@ -97,9 +105,6 @@ void Strips::animateLinear() {
   }
 }
 
-/**
-  Turns on the lights without any animation
-**/
 void Strips::fixed() {
   stripFront.begin();
   stripBack.begin();

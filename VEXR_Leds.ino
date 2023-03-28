@@ -2,9 +2,10 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
-#include "Strips.h"
 #include "WebApp.h"
 #include <string>
+#include "AnimationType.h"
+#include "Strips.h"
 
 using namespace std;
 
@@ -15,23 +16,16 @@ IPAddress gateway(4, 4, 4, 4);
 IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
-Strips strips;
+Strips strips;  // TODO : Use individual objects
 WebApp webApp;
-bool POWERED_ON = true;
-
-typedef enum {
-  LINEAR,
-  ACCORDION,
-  FIXED
-} AnimationType;
-
+bool POWERED_ON = true;  // TODO : move this to Strip
 AnimationType animation = AnimationType::LINEAR;
 
 /**
   Display the webapp  root
 **/
 void displayIndexPage() {
-  server.send(200, "text/html", webApp.getHtml());
+  server.send(200, "text/html", webApp.getHtml());  // TODO : Use LittleFS instead of a class : https://byfeel.info/esp8266-systeme-de-fichier-littlefs/
 }
 
 /**
@@ -39,18 +33,25 @@ void displayIndexPage() {
 **/
 void startServer() {
   server.on("/", displayIndexPage);
+
+  /******
+   POWER 
+  ******/
   server.on("/power", HTTP_GET, []() {
     server.send(200, "text/plain", POWERED_ON ? "1" : "0");
   });
   server.on("/power/on", HTTP_POST, []() {
-    POWERED_ON = true;
-    Serial.println("turned on");
+    strips.powerOn(true);
     server.send(200);
   });
   server.on("/power/off", HTTP_POST, []() {
-    POWERED_ON = false;
+    strips.powerOn(false);
     server.send(200);
   });
+
+  /**********
+   BRIGHTNESS 
+  ***********/
   server.on("/brightness/front", HTTP_GET, []() {
     String brightnessFront(strips.brightnessFront);
     server.send(200, "text/plain", brightnessFront);
@@ -69,6 +70,10 @@ void startServer() {
     strips.brightnessBack = level.toInt();
     server.send(200);
   });
+
+  /*********
+   ANIMATION 
+  **********/
   server.on("/animation", HTTP_GET, []() {
     String animationName;
     switch (animation) {
@@ -96,19 +101,23 @@ void startServer() {
     animation = AnimationType::FIXED;
     server.send(200);
   });
+
+
   httpUpdater.setup(&server);
   server.begin();
 }
 
-/**
-  App setup
-**/
+/******
+ SETUP
+******/
 void setup() {
+  Serial.begin(9600);
+
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(APSSID);
 
   IPAddress myIP = WiFi.softAPIP();
-  Serial.begin(9600);
+
   Serial.print("AP IP address: ");
   Serial.println(myIP);
 
@@ -123,7 +132,7 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  if (POWERED_ON) {
+  if (strips.isPoweredOn()) {
     switch (animation) {
       case AnimationType::LINEAR:
         strips.animateLinear();
