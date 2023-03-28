@@ -8,22 +8,24 @@ Adafruit_NeoPixel stripFront(NB_PIXELS, PIN_FRONT, NEO_GRB + NEO_KHZ800);  // Th
 Adafruit_NeoPixel stripBack(NB_PIXELS, PIN_BACK, NEO_GRB + NEO_KHZ800);    // The back strip
 
 Strips::Strips() {
-  colorFront = stripFront.Color(255, 100, 0);
-  colorBack = stripFront.Color(255, 100, 0);
-
-  stripFront.begin();
-  stripBack.begin();
+  colorFront = stripFront.Color(255, 255, 255); //255, 100, 0
+  colorBack = stripFront.Color(255, 0, 0);
+  brightnessFront = 255;
+  brightnessBack = 255;
 }
 
 /**
   Triggers one turn of accordion animation for both the strips
 **/
 void Strips::animateAccordion() {
-  const int brightness = 180;
-  const int turnDelay = 50;
 
-  stripFront.setBrightness(brightness);
-  stripBack.setBrightness(brightness);
+  const int turnDelay = 35;
+
+  stripFront.begin();
+  stripBack.begin();
+
+  stripFront.setBrightness(brightnessFront);
+  stripBack.setBrightness(brightnessBack);
 
   for (int i = 0; i < NB_PIXELS; i++) {
     int offset = 0;
@@ -59,11 +61,14 @@ void Strips::animateAccordion() {
   Triggers one turn of linear animation for both the strips
 **/
 void Strips::animateLinear() {
-  const int brightness = 255;
+
   const int turnDelay = 35;
 
-  stripFront.setBrightness(brightness);
-  stripBack.setBrightness(brightness);
+  stripFront.begin();
+  stripBack.begin();
+
+  stripFront.setBrightness(brightnessFront);
+  stripBack.setBrightness(brightnessBack);
 
   for (int i = 1; i < NB_PIXELS * 2 - 1; i++) {
     int offset = 0;
@@ -76,7 +81,6 @@ void Strips::animateLinear() {
     const int led = i + offset - 1;
 
     stripFront.clear();
-
     stripFront.setPixelColor(led, colorFront);
     stripFront.show();
 
@@ -92,13 +96,16 @@ void Strips::animateLinear() {
     stripBack.show();
   }
 }
+
 /**
   Turns on the lights without any animation
 **/
 void Strips::fixed() {
-  const int brightness = 40;
-  stripFront.setBrightness(brightness);
-  stripBack.setBrightness(brightness);
+  stripFront.begin();
+  stripBack.begin();
+
+  stripFront.setBrightness(brightnessFront);
+  stripBack.setBrightness(brightnessBack);
 
   for (int i = 0; i < NB_PIXELS; i++) {
     stripFront.setPixelColor(i, colorFront);
